@@ -1,0 +1,42 @@
+# MCP configuration with secrets
+.mcp.json
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Build
+build/
+dist/
+*.jar
+*.class
+
+# Gradle
+.gradle/
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Frontend
+.next/
+out/
+.vuepress/dist/
