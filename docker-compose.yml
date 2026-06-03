@@ -1,0 +1,79 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: bsq-postgres
+    environment:
+      POSTGRES_USER: bsq
+      POSTGRES_PASSWORD: bsq_secret
+      POSTGRES_DB: bsq_exam
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bsq -d bsq_exam"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: bsq-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: bsq-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/bsq_exam
+      DB_USERNAME: bsq
+      DB_PASSWORD: bsq_secret
+      JWT_SECRET: YnNxX2V4YW1fcG9ydGFsX3N1cGVyX3NlY3JldF9rZXlfMzJieXRlcw==
+      SERVER_PORT: 8080
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: bsq-exams
+      MINIO_PUBLIC_URL: http://localhost/storage
+      TZ: Asia/Baku
+      JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Baku
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build: ./frontend
+    container_name: bsq-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:

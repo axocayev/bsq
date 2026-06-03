@@ -1,0 +1,92 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body { margin: 0; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+
+#root { width: 100%; min-height: 100vh; }
+
+/* ── Layout ─────────────────────────────────────────────── */
+
+/* Sider: hide on mobile via Ant Design breakpoint="lg" collapsedWidth="0" */
+.ant-layout { min-height: 100vh; }
+
+/* Content padding: smaller on mobile */
+@media (max-width: 768px) {
+  .ant-layout-content {
+    margin: 12px !important;
+    padding: 12px !important;
+    border-radius: 6px !important;
+  }
+
+  .ant-layout-header {
+    padding: 0 12px !important;
+  }
+}
+
+/* ── Tables ──────────────────────────────────────────────── */
+/* Always allow horizontal scroll so tables never break layout */
+.ant-table-wrapper { overflow-x: auto; }
+
+@media (max-width: 768px) {
+  .ant-table { font-size: 13px; }
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td { padding: 8px 6px !important; }
+
+  /* Hide less critical columns on small screens via utility class */
+  .hide-xs { display: none !important; }
+}
+
+/* ── Modals ──────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ant-modal {
+    max-width: 100vw !important;
+    margin: 0 !important;
+    top: 0 !important;
+    padding: 0 !important;
+  }
+  .ant-modal-content {
+    border-radius: 0 !important;
+    min-height: 100dvh;
+  }
+  .ant-modal-body { padding: 12px !important; }
+}
+
+/* ── Drawers ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ant-drawer-content-wrapper {
+    width: 100vw !important;
+  }
+}
+
+/* ── Forms ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ant-form-item { margin-bottom: 12px; }
+  .ant-picker,
+  .ant-select,
+  .ant-input-number { width: 100% !important; }
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ant-card-body { padding: 12px !important; }
+  .ant-statistic-title { font-size: 12px; }
+  .ant-statistic-content { font-size: 20px !important; }
+}
+
+/* ── Buttons / Space ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ant-space-item .ant-btn { font-size: 12px; padding: 0 8px; }
+  .ant-btn-sm { font-size: 11px; }
+  /* Make action button groups wrap */
+  .ant-space-horizontal { flex-wrap: wrap; }
+}
+
+/* ── Exam take page ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .exam-sticky-header { position: sticky; top: 0; z-index: 10; }
+  .exam-question-card { margin-bottom: 12px !important; }
+}
+
+/* ── Dashboard stats ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ant-row { row-gap: 8px !important; }
+}
