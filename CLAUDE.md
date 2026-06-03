@@ -148,6 +148,7 @@ See `backend/README.md` for complete endpoint list. Common endpoints:
 - `POST /teacher/exams/:id/assign` — assign students
 - `GET /teacher/questions` — list questions
 - `POST /teacher/questions` — create question
+- `POST /teacher/questions/import-ai` — import questions from file via AI parsing (PDF/DOCX/TXT)
 
 **Student**:
 - `GET /student/exams` — list assigned exams
@@ -178,16 +179,29 @@ See `backend/README.md` for complete endpoint list. Common endpoints:
 
 ## Recent Changes (June 2026)
 
+- **AI Question Import** (June 3):
+  - Complete flow: File upload → Claude parsing → Edit & approve → Save to database
+  - Upload phase: Drag-drop file input (PDF, DOCX, TXT), 10MB limit
+  - AI parsing: Backend extracts text and calls Claude Haiku 4.5 API
+  - Review phase: Editable question cards with inline editing (no modal)
+  - Per-question approval: Each question saved independently via createQuestion API
+  - Backend: New `AiQuestionImportService`, POST `/v1/teacher/questions/import-ai`
+  - Frontend: New `ImportQuestionsAIPage` with 3-phase state machine (upload → review → done)
+  - Dependencies: Apache PDFBox 3.0.3 (PDF), Apache POI 5.3.0 (DOCX)
+  - Configuration: Set `ANTHROPIC_API_KEY` environment variable
+  - i18n: Complete translations for 29 new keys in English, Azerbaijani, Russian
+  - Routes: `/teacher/questions/import-ai` navigated from Questions page "Import Questions" button
+
 - **Questions Page Refactoring** (June 3):
   - Moved question creation/editing from modal to dedicated full pages
   - New `CreateQuestionPage.jsx` at `/teacher/questions/create` (create mode)
   - Edit mode at `/teacher/questions/:id/edit` (reuses same component)
   - Back button navigation to return to questions list
   - Improved options layout using Card-based design (better than nested form items)
-  - Added "Import Questions from File" button (placeholder - shows "Coming Soon")
+  - "Import Questions" button now navigates to AI import page (no longer "Coming Soon")
   - View-only modal remains for reading question details
   - Translation keys updated for all 3 languages (en, az, ru)
-  - Routes: `/teacher/questions/create`, `/teacher/questions/:id/edit`
+  - Routes: `/teacher/questions/create`, `/teacher/questions/:id/edit`, `/teacher/questions/import-ai`
 
 - **ExamService Refactoring** (June 1):
   - Created `OtpService` to isolate OTP generation (side effect)

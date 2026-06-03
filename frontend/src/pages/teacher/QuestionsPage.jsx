@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   Table, Button, Modal, Input, Space, Popconfirm, message,
-  Tag, Typography, Row, Col, Image, Descriptions, Divider, Upload,
+  Tag, Typography, Row, Col, Image, Descriptions, Divider,
 } from 'antd';
-import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, EyeOutlined, ImportOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined, EyeOutlined, ImportOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { getMyQuestions, deleteQuestion } from '../../api/questions';
@@ -77,18 +77,9 @@ export default function QuestionsPage() {
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
               {t('questions.addQuestion')}
             </Button>
-            <Upload
-              accept=".json,.csv"
-              showUploadList={false}
-              beforeUpload={(file) => {
-                message.info(t('common.comingSoon'));
-                return false;
-              }}
-            >
-              <Button icon={<ImportOutlined />}>
-                {t('questions.importFromFile')}
-              </Button>
-            </Upload>
+            <Button icon={<ImportOutlined />} onClick={() => navigate('/teacher/questions/import-ai')}>
+              {t('questions.importFromAI')}
+            </Button>
           </Space>
         </Col>
       </Row>

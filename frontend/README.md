@@ -148,15 +148,29 @@ docker compose up -d frontend             # start (port 80)
 
 ## Recent Changes (June 2026)
 
+- **AI Question Import** (June 3):
+  - Complete feature for importing questions from uploaded files (PDF, DOCX, TXT)
+  - 3-phase workflow: Upload → Review & Edit → Done
+  - Upload phase: Drag-drop file input with validation (10MB limit)
+  - AI parsing: Sends file to backend which extracts text and calls Claude API
+  - Review phase: Editable question cards with inline editing (text, type, options)
+  - Approval workflow: Teacher can approve or skip each question
+  - Per-question saves: Each "Approve & Save" calls createQuestion API independently
+  - New route: `/teacher/questions/import-ai`
+  - New component: `ImportQuestionsAIPage.jsx` (3-phase state machine)
+  - API function: `importQuestionsFromAI()` with upload progress tracking
+  - i18n: 29 new keys in `importAI` section + 3 keys added to `common` section
+  - All 3 languages supported: English, Azerbaijani, Russian
+
 - **Questions Page Refactoring** (June 3):
   - Moved question creation/editing from modal to dedicated full pages
   - New `CreateQuestionPage.jsx` component at `/teacher/questions/create` (create mode)
   - Edit mode at `/teacher/questions/:id/edit` (reuses same component with pre-filled data)
   - Back button navigation to return to questions list
   - Improved options layout using Card-based design for better UX
-  - Added "Import Questions from File" button (placeholder - shows "Coming Soon")
+  - "Import Questions" button now navigates to AI import page (no longer "Coming Soon")
   - View-only modal remains for reading question details
-  - I18n keys updated: `questions.importFromFile`, `questions.option` for all 3 languages
+  - I18n keys updated: `questions.importFromAI` for all 3 languages
 
 - **Home Page & Logout** (`App.jsx` Home component): `/` route unified with login/dashboard
   - Not logged in: Shows LoginPage at `/`

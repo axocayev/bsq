@@ -218,7 +218,10 @@
     "operationFailed": "Əməliyyat uğursuz oldu",
     "deleteFailed": "Silmə uğursuz oldu",
     "loading": "Yüklənir...",
-    "search": "Axtar..."
+    "search": "Axtar...",
+    "comingSoon": "Tezliklə",
+    "undo": "Geri al",
+    "notReviewed": "nəzərdən keçirilməmiş"
   },
 
   "schools": {
@@ -350,6 +353,7 @@
     "title": "Mənim Suallarım",
     "addQuestion": "Sual əlavə et",
     "importFromFile": "Sualları idxal et",
+    "importFromAI": "Sualları idxal et",
     "createQuestion": "Sual yarat",
     "editQuestion": "Sualı redaktə et",
     "questionText": "Sualın mətni",
@@ -378,6 +382,37 @@
     "maxFileSize": "Maks 1MB",
     "compressing": "Sıxılır...",
     "uploading": "Yüklənir..."
+  },
+
+  "importAI": {
+    "title": "AI ilə Sualları İdxal Et",
+    "uploadTitle": "Sənədi yükləyin",
+    "uploadHint": "PDF, DOCX və ya TXT faylı sürükləyin və ya seçin (maks 10 MB)",
+    "parseButton": "AI ilə Analiz Et",
+    "parsing": "Sənəd analiz edilir...",
+    "uploading": "Yüklənir...",
+    "invalidFileType": "Yalnız PDF, DOCX və TXT faylları dəstəklənir",
+    "fileTooLarge": "Fayl 10 MB-dan kiçik olmalıdır",
+    "noFileSelected": "Zəhmət olmasa fayl seçin",
+    "parseError": "Sənədi analiz etmək alınmadı. Yenidən cəhd edin.",
+    "reviewTitle": "Tapılmış Sualları Nəzərdən Keçirin",
+    "reviewSubtitle": "{{count}} sual tapıldı. Hər birini nəzərdən keçirib, redaktə edib, təsdiq edin.",
+    "approve": "Təsdiq et və Saxla",
+    "skip": "Burax",
+    "approving": "Saxlanılır...",
+    "approved": "Saxlanıldı",
+    "skipped": "Buraxıldı",
+    "finishReview": "Nəzərdən Keçirməni Bitir",
+    "textRequired": "Sualın mətni tələb olunur",
+    "needsOptions": "Ən azı 2 variant əlavə edin",
+    "needsCorrect": "Ən azı bir düzgün variantı işarələyin",
+    "doneTitle": "İdxal Tamamlandı",
+    "doneSummary": "{{saved}} sual sual bankına saxlanıldı",
+    "doneSkipped": "{{skipped}} buraxıldı",
+    "goToQuestions": "Mənim Suallarıma Get",
+    "noQuestionsFound": "Sənəddə sual tapılmadı. Başqa fayl cəhd edin.",
+    "aiNotConfigured": "AI idxalı mövcud deyil. Administratorunuzla əlaqə saxlayın.",
+    "apiError": "AI xidməti müvəqqəti əlçatmazdır. Zəhmət olmasa yenidən cəhd edin."
   },
 
   "exams": {

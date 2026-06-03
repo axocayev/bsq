@@ -9,6 +9,7 @@ import az.bsq.model.dto.response.SubjectResponse;
 import az.bsq.model.dto.request.exam_attempt.GradeAnswerRequest;
 import az.bsq.model.dto.request.question.CreateQuestionRequest;
 import az.bsq.model.dto.response.*;
+import az.bsq.service.impl.AiQuestionImportService;
 import az.bsq.service.impl.ExamAttemptServiceImpl;
 import az.bsq.service.impl.ExamServiceImpl;
 import az.bsq.service.impl.QuestionServiceImpl;
@@ -21,9 +22,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -39,6 +42,7 @@ public class TeacherController {
     private final UserServiceImpl userService;
     private final SubjectServiceImpl subjectService;
     private final SecurityUtils securityUtils;
+    private final AiQuestionImportService aiQuestionImportService;
 
     // --- Subjects (read-only for teacher) ---
 
@@ -73,6 +77,13 @@ public class TeacherController {
     public ResponseEntity<Void> deleteQuestion(@PathVariable Long id) {
         questionService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/questions/import-ai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<AiQuestionImportService.ParsedQuestionDto>> importQuestionsFromAI(
+            @RequestParam("file") MultipartFile file) {
+        List<AiQuestionImportService.ParsedQuestionDto> parsed = aiQuestionImportService.importFromFile(file);
+        return ResponseEntity.ok(parsed);
     }
 
     // --- Students (same school, for exam assignment) ---

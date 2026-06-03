@@ -218,7 +218,10 @@
     "operationFailed": "Operation failed",
     "deleteFailed": "Delete failed",
     "loading": "Loading...",
-    "search": "Search..."
+    "search": "Search...",
+    "comingSoon": "Coming Soon",
+    "undo": "Undo",
+    "notReviewed": "not reviewed"
   },
 
   "schools": {
@@ -350,6 +353,7 @@
     "title": "My Questions",
     "addQuestion": "Add Question",
     "importFromFile": "Import Questions",
+    "importFromAI": "Import Questions",
     "createQuestion": "Create Question",
     "editQuestion": "Edit Question",
     "questionText": "Question Text",
@@ -378,6 +382,37 @@
     "maxFileSize": "Max 1MB",
     "compressing": "Compressing...",
     "uploading": "Uploading..."
+  },
+
+  "importAI": {
+    "title": "Import Questions with AI",
+    "uploadTitle": "Upload a document",
+    "uploadHint": "Drag & drop or click to select a PDF, DOCX, or TXT file (max 10 MB)",
+    "parseButton": "Parse with AI",
+    "parsing": "Analyzing document...",
+    "uploading": "Uploading...",
+    "invalidFileType": "Only PDF, DOCX, and TXT files are supported",
+    "fileTooLarge": "File must be smaller than 10 MB",
+    "noFileSelected": "Please select a file first",
+    "parseError": "Failed to parse the document. Please try again.",
+    "reviewTitle": "Review Parsed Questions",
+    "reviewSubtitle": "{{count}} questions found. Review, edit, then approve each one to save it.",
+    "approve": "Approve & Save",
+    "skip": "Skip",
+    "approving": "Saving...",
+    "approved": "Saved",
+    "skipped": "Skipped",
+    "finishReview": "Finish Review",
+    "textRequired": "Question text is required",
+    "needsOptions": "Add at least 2 options",
+    "needsCorrect": "Mark at least one option as correct",
+    "doneTitle": "Import Complete",
+    "doneSummary": "{{saved}} question(s) saved to your question bank",
+    "doneSkipped": "{{skipped}} skipped",
+    "goToQuestions": "Go to My Questions",
+    "noQuestionsFound": "No questions were found in the document. Try a different file.",
+    "aiNotConfigured": "AI import is not available. Contact your administrator.",
+    "apiError": "AI service is temporarily unavailable. Please try again later."
   },
 
   "exams": {
