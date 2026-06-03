@@ -176,7 +176,18 @@ See `backend/README.md` for complete endpoint list. Common endpoints:
 - Axios with `axiosInstance` for API calls
 - Context API for global auth state
 
-## Recent Changes (May 2026)
+## Recent Changes (June 2026)
+
+- **Questions Page Refactoring** (June 3):
+  - Moved question creation/editing from modal to dedicated full pages
+  - New `CreateQuestionPage.jsx` at `/teacher/questions/create` (create mode)
+  - Edit mode at `/teacher/questions/:id/edit` (reuses same component)
+  - Back button navigation to return to questions list
+  - Improved options layout using Card-based design (better than nested form items)
+  - Added "Import Questions from File" button (placeholder - shows "Coming Soon")
+  - View-only modal remains for reading question details
+  - Translation keys updated for all 3 languages (en, az, ru)
+  - Routes: `/teacher/questions/create`, `/teacher/questions/:id/edit`
 
 - **ExamService Refactoring** (June 1):
   - Created `OtpService` to isolate OTP generation (side effect)

@@ -146,7 +146,17 @@ docker compose up -d frontend             # start (port 80)
 **Files**
 - `POST /files/upload` — Upload file (max 1MB)
 
-## Recent Changes (May 2026)
+## Recent Changes (June 2026)
+
+- **Questions Page Refactoring** (June 3):
+  - Moved question creation/editing from modal to dedicated full pages
+  - New `CreateQuestionPage.jsx` component at `/teacher/questions/create` (create mode)
+  - Edit mode at `/teacher/questions/:id/edit` (reuses same component with pre-filled data)
+  - Back button navigation to return to questions list
+  - Improved options layout using Card-based design for better UX
+  - Added "Import Questions from File" button (placeholder - shows "Coming Soon")
+  - View-only modal remains for reading question details
+  - I18n keys updated: `questions.importFromFile`, `questions.option` for all 3 languages
 
 - **Home Page & Logout** (`App.jsx` Home component): `/` route unified with login/dashboard
   - Not logged in: Shows LoginPage at `/`
@@ -174,9 +184,6 @@ docker compose up -d frontend             # start (port 80)
   - Fetched from `AuthResponse.schoolName` on login
   - Displays for SCHOOL_ADMIN, TEACHER, STUDENT roles
   - Used for user context and school-specific UI
-
-- **I18n Updates**: Added translation keys for new features
-  - `exams.addStudent`, `exams.addSelectedStudents`
   - `exams.allAlreadyAssigned`, `exams.noStudentsAssigned`
   - Supported in English, Azerbaijani, Russian
 

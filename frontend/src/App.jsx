@@ -24,6 +24,7 @@ import AssignmentResultPage from './pages/school-admin/AssignmentResultPage';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import SubjectsPage from './pages/teacher/SubjectsPage';
 import QuestionsPage from './pages/teacher/QuestionsPage';
+import CreateQuestionPage from './pages/teacher/CreateQuestionPage';
 import ExamsPage from './pages/teacher/ExamsPage';
 import ExamManagePage from './pages/teacher/ExamManagePage';
 import ExamResultsPage from './pages/teacher/ExamResultsPage';
@@ -78,6 +79,8 @@ export default function App() {
               <Route path="/teacher/dashboard" element={<ProtectedRoute roles={['TEACHER']}><TeacherDashboard /></ProtectedRoute>} />
               <Route path="/teacher/subjects" element={<ProtectedRoute roles={['TEACHER']}><SubjectsPage /></ProtectedRoute>} />
               <Route path="/teacher/questions" element={<ProtectedRoute roles={['TEACHER']}><QuestionsPage /></ProtectedRoute>} />
+              <Route path="/teacher/questions/create" element={<ProtectedRoute roles={['TEACHER']}><CreateQuestionPage /></ProtectedRoute>} />
+              <Route path="/teacher/questions/:id/edit" element={<ProtectedRoute roles={['TEACHER']}><CreateQuestionPage /></ProtectedRoute>} />
               <Route path="/teacher/exams" element={<ProtectedRoute roles={['TEACHER']}><ExamsPage /></ProtectedRoute>} />
               <Route path="/teacher/exams/:examId/manage" element={<ProtectedRoute roles={['TEACHER']}><ExamManagePage /></ProtectedRoute>} />
               <Route path="/teacher/exams/:examId/results" element={<ProtectedRoute roles={['TEACHER']}><ExamResultsPage /></ProtectedRoute>} />
