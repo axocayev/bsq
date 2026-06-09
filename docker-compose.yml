@@ -39,16 +39,18 @@ services:
     build: ./backend
     container_name: bsq-backend
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/bsq_exam
-      DB_USERNAME: bsq
-      DB_PASSWORD: bsq_secret
-      JWT_SECRET: YnNxX2V4YW1fcG9ydGFsX3N1cGVyX3NlY3JldF9rZXlfMzJieXRlcw==
+      DB_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/bsq_exam}
+      DB_USERNAME: ${DB_USERNAME:-bsq}
+      DB_PASSWORD: ${DB_PASSWORD:-bsq_secret}
+      JWT_SECRET: ${JWT_SECRET:-YnNxX2V4YW1fcG9ydGFsX3N1cGVyX3NlY3JldF9rZXlfMzJieXRlcw==}
       SERVER_PORT: 8080
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_BUCKET: bsq-exams
       MINIO_PUBLIC_URL: http://localhost/storage
+      CHATGPT_API_KEY: ${CHATGPT_API_KEY:- }
+      CHATGPT_MODEL: ${CHATGPT_MODEL:-gpt-4o-mini}
       TZ: Asia/Baku
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Baku
     ports:

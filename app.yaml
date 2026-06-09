@@ -1,0 +1,53 @@
+name: bsq-exam-portal
+slug: bsq-exam-portal
+
+services:
+  - name: backend
+    github:
+      repo: anarxocayev/bsq
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    build_command: ./gradlew bootJar --no-daemon
+    dockerfile_path: Dockerfile
+    http_port: 8080
+    health_check:
+      http_path: /api/actuator/health
+    resource_requests:
+      cpu_cores: 1
+      memory_mb: 1024
+    min_instance_count: 1
+    max_instance_count: 3
+
+  - name: frontend
+    github:
+      repo: anarxocayev/bsq
+      branch: main
+      deploy_on_push: true
+    source_dir: frontend
+    build_command: npm run build
+    dockerfile_path: Dockerfile
+    http_port: 80
+    routes:
+      - path: /
+        component_name: frontend
+    resource_requests:
+      cpu_cores: 0.5
+      memory_mb: 512
+    min_instance_count: 1
+    max_instance_count: 2
+
+databases:
+  - engine: PG
+    name: bsq-postgres
+    version: "16"
+    production: true
+    storage_mb: 10240
+
+volumes:
+  - name: postgres-data
+    filesystem_type: ext4
+    size_gib: 20
+  - name: minio-data
+    filesystem_type: ext4
+    size_gib: 50

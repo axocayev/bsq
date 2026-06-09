@@ -1,0 +1,171 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: registry.digitalocean.com
+  CLUSTER_NAME: bsq-cluster
+  DO_REGION: nyc3
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    name: Test Backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Run backend tests
+        working-directory: ./backend
+        run: |
+          chmod +x gradlew
+          ./gradlew test --no-daemon
+      - name: Build backend JAR
+        working-directory: ./backend
+        run: ./gradlew bootJar --no-daemon
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    name: Test Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm run test -- --run
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+  build-and-push:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    name: Build & Push Docker Images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to DigitalOcean Container Registry
+        run: |
+          echo "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --password-stdin registry.digitalocean.com
+
+      - name: Build backend Docker image
+        working-directory: ./backend
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/bsq/backend:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/bsq/backend:latest \
+            .
+
+      - name: Push backend image to DOCR
+        run: |
+          docker push ${{ env.REGISTRY }}/bsq/backend:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/bsq/backend:latest
+
+      - name: Build frontend Docker image
+        working-directory: ./frontend
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/bsq/frontend:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/bsq/frontend:latest \
+            .
+
+      - name: Push frontend image to DOCR
+        run: |
+          docker push ${{ env.REGISTRY }}/bsq/frontend:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/bsq/frontend:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    name: Deploy to DigitalOcean App Platform
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Get App ID
+        id: app-id
+        run: |
+          APP_ID=$(doctl apps list --format id --no-header --name bsq-exam-portal)
+          echo "app_id=$APP_ID" >> $GITHUB_OUTPUT
+
+      - name: Update App deployment
+        run: |
+          doctl apps create-deployment \
+            --app-id=${{ steps.app-id.outputs.app_id }} \
+            --format id,status,phase \
+            --no-header
+
+      - name: Wait for deployment
+        run: |
+          DEPLOYMENT_ID=$(doctl apps list-deployments \
+            --app-id=${{ steps.app-id.outputs.app_id }} \
+            --format id --no-header --limit 1)
+
+          for i in {1..60}; do
+            STATUS=$(doctl apps get-deployment \
+              --app-id=${{ steps.app-id.outputs.app_id }} \
+              $DEPLOYMENT_ID \
+              --format status --no-header)
+
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Deployment successful!"
+              exit 0
+            elif [ "$STATUS" = "ERROR" ]; then
+              echo "Deployment failed!"
+              exit 1
+            fi
+
+            echo "Waiting for deployment... ($i/60)"
+            sleep 10
+          done
+
+          echo "Deployment timeout!"
+          exit 1
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "✅ Deployment Complete!"
+          echo "App: bsq-exam-portal"
+          echo "Images pushed to: ${{ env.REGISTRY }}/bsq"
+          echo "Backend: ${{ env.REGISTRY }}/bsq/backend:${{ github.sha }}"
+          echo "Frontend: ${{ env.REGISTRY }}/bsq/frontend:${{ github.sha }}"
+
+  notify:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    name: Notify Status
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            echo "✅ All steps completed successfully"
+          else
+            echo "❌ Deployment failed or was skipped"
+          fi

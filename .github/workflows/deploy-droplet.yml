@@ -1,0 +1,135 @@
+name: Deploy to DigitalOcean Droplet
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test Backend & Frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: |
+          chmod +x gradlew
+          ./gradlew test --no-daemon
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm run test -- --run
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    name: Deploy to Droplet
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          CHATGPT_API_KEY: ${{ secrets.CHATGPT_API_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Copy code to server
+          scp -i ~/.ssh/deploy_key -r -o StrictHostKeyChecking=no backend $DEPLOY_USER@$DEPLOY_HOST:/root/bsq/
+          scp -i ~/.ssh/deploy_key -r -o StrictHostKeyChecking=no frontend $DEPLOY_USER@$DEPLOY_HOST:/root/bsq/
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no docker-compose.yml $DEPLOY_USER@$DEPLOY_HOST:/root/bsq/
+
+          # Create .env file on remote with secrets from GitHub Secrets
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "cat > /root/bsq/.env << 'ENVEOF'
+DB_URL=$DB_URL
+DB_USERNAME=$DB_USERNAME
+DB_PASSWORD=$DB_PASSWORD
+JWT_SECRET=$JWT_SECRET
+MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+CHATGPT_API_KEY=$CHATGPT_API_KEY
+CHATGPT_MODEL=gpt-4o-mini
+ENVEOF
+chmod 600 /root/bsq/.env"
+
+          # Deploy with docker-compose
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'SSHEOF'
+          cd /root/bsq
+          docker-compose down
+          docker-compose build --no-cache backend frontend
+          docker-compose up -d
+          echo "✅ Services started"
+          docker-compose ps
+          SSHEOF
+
+      - name: Verify deployment
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
+
+          echo "Waiting for backend to be healthy..."
+          for i in {1..30}; do
+            if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \
+              "curl -s http://localhost:8080/api/actuator/health | grep -q UP" 2>/dev/null; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+          echo "❌ Backend health check failed"
+          exit 1
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    name: Deployment Notification
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            echo "✅ Deployment completed successfully"
+            echo "Application is running at: http://${{ secrets.DEPLOY_HOST }}"
+          else
+            echo "❌ Deployment failed"
+            exit 1
+          fi
