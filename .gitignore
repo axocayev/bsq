@@ -15,8 +15,8 @@ dist/
 
 # Gradle
 .gradle/
-gradle-wrapper.jar
-gradle-wrapper.properties
+# Note: gradle-wrapper.jar and gradle-wrapper.properties are committed intentionally
+# They are needed for CI/CD pipelines to work without pre-installed Gradle
 
 # Dependencies
 node_modules/
