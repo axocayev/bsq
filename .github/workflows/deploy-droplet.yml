@@ -64,9 +64,12 @@ jobs:
           key: npm-cache-${{ hashFiles('**/package-lock.json') }}
           restore-keys: npm-cache-
 
+      - name: Clean npm cache (if needed)
+        run: npm cache clean --force 2>/dev/null || true
+
       - name: Install Dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Lint Code
         working-directory: ./frontend
