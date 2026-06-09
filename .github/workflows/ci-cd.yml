@@ -84,7 +84,7 @@ jobs:
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     name: Build Docker Images
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4.1.7
 
@@ -115,7 +115,7 @@ jobs:
     needs: build-docker
     runs-on: ubuntu-latest
     name: Push to Docker Hub
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4.1.7
 
@@ -164,7 +164,7 @@ jobs:
     needs: push-to-registry
     runs-on: ubuntu-latest
     name: Deploy to Droplet
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4.1.7
 
