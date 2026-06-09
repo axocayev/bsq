@@ -20,46 +20,79 @@ env:
   IMAGE_NAME: bsq
 
 jobs:
+  # ==================== BACKEND PIPELINE ====================
+
   test-backend:
     runs-on: ubuntu-latest
     name: Test Backend
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
-      - name: Run backend tests
+
+      - name: Compile Backend
         working-directory: ./backend
         run: |
           chmod +x gradlew
-          ./gradlew test --no-daemon
-      - name: Build backend JAR
+          ./gradlew compileJava --no-daemon
+
+      - name: Run Backend Tests
+        working-directory: ./backend
+        run: ./gradlew test --no-daemon
+
+      - name: Build Backend JAR
         working-directory: ./backend
         run: ./gradlew bootJar --no-daemon
+
+      - name: Upload Backend Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-jar
+          path: backend/build/libs/*.jar
+          retention-days: 1
+
+  # ==================== FRONTEND PIPELINE ====================
 
   test-frontend:
     runs-on: ubuntu-latest
     name: Test Frontend
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
-      - name: Install dependencies
+
+      - name: Install Dependencies
         working-directory: ./frontend
         run: npm ci
-      - name: Run frontend tests
+
+      - name: Lint Code
+        working-directory: ./frontend
+        run: npm run lint 2>/dev/null || echo "Lint warnings (non-blocking)"
+
+      - name: Run Frontend Tests
         working-directory: ./frontend
         run: npm run test -- --run
-      - name: Build frontend
+
+      - name: Build Frontend
         working-directory: ./frontend
         run: npm run build
+
+      - name: Upload Frontend Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 1
 
   build-and-push:
     needs: [test-backend, test-frontend]
@@ -157,16 +190,37 @@ jobs:
           echo "Backend: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}"
           echo "Frontend: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}"
 
-  notify:
-    needs: [deploy]
+  # ==================== REPORT ====================
+
+  report:
+    needs: [test-backend, test-frontend, build-and-push]
     runs-on: ubuntu-latest
     if: always()
-    name: Notify Status
+    name: Pipeline Report
     steps:
-      - name: Deployment Status
+      - name: Build Summary
         run: |
-          if [ "${{ needs.deploy.result }}" = "success" ]; then
-            echo "✅ All steps completed successfully"
+          echo "=========================================="
+          echo "   🔄 CI/CD PIPELINE REPORT"
+          echo "=========================================="
+          echo ""
+          echo "📊 Stage Results:"
+          echo "  • Backend Tests:    ${{ needs.test-backend.result }}"
+          echo "  • Frontend Tests:   ${{ needs.test-frontend.result }}"
+          echo "  • Docker Hub Push:  ${{ needs.build-and-push.result }}"
+          echo ""
+
+          if [ "${{ needs.build-and-push.result }}" = "success" ]; then
+            echo "✅ Pipeline PASSED"
+            echo ""
+            echo "🐳 Docker Images Published:"
+            echo "  • ${{ env.DOCKER_USERNAME }}/bsq-backend:latest"
+            echo "  • ${{ env.DOCKER_USERNAME }}/bsq-frontend:latest"
+            echo ""
+            echo "🔗 Docker Hub: https://hub.docker.com/u/${{ env.DOCKER_USERNAME }}"
           else
-            echo "❌ Deployment failed or was skipped"
+            echo "⚠️  Pipeline Completed (Images may not have been pushed)"
           fi
+          echo ""
+          echo "📝 Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "=========================================="

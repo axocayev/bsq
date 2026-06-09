@@ -3,12 +3,16 @@ name: Deploy to DigitalOcean Droplet
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  test:
+  # ==================== BACKEND PIPELINE ====================
+
+  test-backend:
     runs-on: ubuntu-latest
-    name: Test Backend & Frontend
+    name: Test Backend
     steps:
       - uses: actions/checkout@v4
 
@@ -19,11 +23,34 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Run backend tests
+      - name: Compile Backend
         working-directory: ./backend
         run: |
           chmod +x gradlew
-          ./gradlew test --no-daemon
+          ./gradlew compileJava --no-daemon
+
+      - name: Run Backend Tests
+        working-directory: ./backend
+        run: ./gradlew test --no-daemon
+
+      - name: Build Backend JAR
+        working-directory: ./backend
+        run: ./gradlew bootJar --no-daemon
+
+      - name: Upload Backend Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-jar
+          path: backend/build/libs/*.jar
+          retention-days: 1
+
+  # ==================== FRONTEND PIPELINE ====================
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    name: Test Frontend
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -32,16 +59,64 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
-      - name: Install frontend dependencies
+      - name: Install Dependencies
         working-directory: ./frontend
         run: npm ci
 
-      - name: Run frontend tests
+      - name: Lint Code
+        working-directory: ./frontend
+        run: npm run lint 2>/dev/null || echo "Lint warnings (non-blocking)"
+
+      - name: Run Frontend Tests
         working-directory: ./frontend
         run: npm run test -- --run
 
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Upload Frontend Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 1
+
+  # ==================== BUILD DOCKER IMAGES ====================
+
+  build-docker:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    name: Build Docker Images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Backend Docker Image
+        working-directory: ./backend
+        run: |
+          docker build \
+            -t bsq-backend:${{ github.sha }} \
+            -t bsq-backend:latest \
+            .
+          echo "✅ Backend image built"
+
+      - name: Build Frontend Docker Image
+        working-directory: ./frontend
+        run: |
+          docker build \
+            -t bsq-frontend:${{ github.sha }} \
+            -t bsq-frontend:latest \
+            .
+          echo "✅ Frontend image built"
+
+      - name: Show Built Images
+        run: docker images | grep bsq
+
+  # ==================== DEPLOYMENT ====================
+
   deploy:
-    needs: test
+    needs: build-docker
     runs-on: ubuntu-latest
     name: Deploy to Droplet
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -118,18 +193,41 @@ chmod 600 /root/bsq/.env"
           echo "❌ Backend health check failed"
           exit 1
 
-  notify:
-    needs: deploy
+  # ==================== REPORT ====================
+
+  report:
+    needs: [test-backend, test-frontend, build-docker, deploy]
     runs-on: ubuntu-latest
     if: always()
-    name: Deployment Notification
+    name: Pipeline Report
     steps:
-      - name: Deployment Status
+      - name: Build Summary
         run: |
+          echo "=========================================="
+          echo "   🔄 CI/CD PIPELINE REPORT"
+          echo "=========================================="
+          echo ""
+          echo "📊 Stage Results:"
+          echo "  • Backend Tests:    ${{ needs.test-backend.result }}"
+          echo "  • Frontend Tests:   ${{ needs.test-frontend.result }}"
+          echo "  • Docker Build:     ${{ needs.build-docker.result }}"
+          echo "  • Deployment:       ${{ needs.deploy.result }}"
+          echo ""
+
           if [ "${{ needs.deploy.result }}" = "success" ]; then
-            echo "✅ Deployment completed successfully"
-            echo "Application is running at: http://${{ secrets.DEPLOY_HOST }}"
+            echo "✅ Pipeline PASSED"
+            echo ""
+            echo "🚀 Application Status:"
+            echo "  Frontend:  http://${{ secrets.DEPLOY_HOST }}"
+            echo "  Backend:   http://${{ secrets.DEPLOY_HOST }}:8080"
+            echo ""
+            echo "📝 Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else
-            echo "❌ Deployment failed"
+            echo "❌ Pipeline FAILED"
+            echo ""
+            echo "Please check the failed stage above for details."
+            echo "📝 Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             exit 1
           fi
+          echo ""
+          echo "=========================================="
