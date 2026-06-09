@@ -101,12 +101,24 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Login to Docker Hub
+        if: secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PAT != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
+      - name: Check Docker Hub Credentials
+        if: secrets.DOCKER_USERNAME == '' || secrets.DOCKER_PAT == ''
+        run: |
+          echo "⚠️  Docker Hub credentials not configured"
+          echo "To push images to Docker Hub, add these secrets:"
+          echo "  - DOCKER_USERNAME: axocayev"
+          echo "  - DOCKER_PAT: your-docker-hub-token"
+          echo ""
+          echo "Skipping Docker Hub push for now"
+
       - name: Build and push backend image
+        if: secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PAT != ''
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -115,7 +127,15 @@ jobs:
             ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-backend:latest
             ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
 
+      - name: Build backend image (no push)
+        if: secrets.DOCKER_USERNAME == '' || secrets.DOCKER_PAT == ''
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+
       - name: Build and push frontend image
+        if: secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PAT != ''
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -123,6 +143,13 @@ jobs:
           tags: |
             ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-frontend:latest
             ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
+
+      - name: Build frontend image (no push)
+        if: secrets.DOCKER_USERNAME == '' || secrets.DOCKER_PAT == ''
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
 
   deploy:
     needs: build-and-push
