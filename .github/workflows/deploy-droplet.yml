@@ -193,17 +193,19 @@ jobs:
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no docker-compose.yml $DEPLOY_USER@$DEPLOY_HOST:/root/bsq/
 
           # Create .env file on remote with secrets from GitHub Secrets
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "cat > /root/bsq/.env << 'ENVEOF'
-DB_URL=$DB_URL
-DB_USERNAME=$DB_USERNAME
-DB_PASSWORD=$DB_PASSWORD
-JWT_SECRET=$JWT_SECRET
-MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
-MINIO_SECRET_KEY=$MINIO_SECRET_KEY
-CHATGPT_API_KEY=$CHATGPT_API_KEY
-CHATGPT_MODEL=gpt-4o-mini
-ENVEOF
-chmod 600 /root/bsq/.env"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'ENVEOF'
+          cat > /root/bsq/.env << 'EOF'
+          DB_URL=$DB_URL
+          DB_USERNAME=$DB_USERNAME
+          DB_PASSWORD=$DB_PASSWORD
+          JWT_SECRET=$JWT_SECRET
+          MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+          MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+          CHATGPT_API_KEY=$CHATGPT_API_KEY
+          CHATGPT_MODEL=gpt-4o-mini
+          EOF
+          chmod 600 /root/bsq/.env
+          ENVEOF
 
           # Deploy with docker-compose (use pre-built images from Docker Hub)
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'SSHEOF'
