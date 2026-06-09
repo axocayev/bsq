@@ -39,6 +39,23 @@ docker compose build backend   # rebuild backend
 
 Services: `frontend` (port 80), `backend` (port 8080), `postgres`, `minio`
 
+### GitHub Actions CI/CD
+
+Automated testing, building, and deployment:
+
+```bash
+# See documentation
+cat .github/SECRETS_QUICK_REFERENCE.md  # Quick setup (2 min)
+cat .github/workflows/README.md          # Workflow details
+cat CI_CD_SETUP.md                       # Complete guide
+```
+
+**Workflows:**
+- `deploy-droplet.yml` - SSH deployment to DigitalOcean Droplet
+- `ci-cd.yml` - Build & push Docker images to Docker Hub
+
+**Secrets required:** See `.github/SECRETS_SETUP.md`
+
 ## Architecture
 
 ### Backend
