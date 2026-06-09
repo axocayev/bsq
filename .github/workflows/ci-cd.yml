@@ -183,7 +183,9 @@ jobs:
           CHATGPT_API_KEY: ${{ secrets.CHATGPT_API_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" | base64 -d > ~/.ssh/deploy_key
+          cat > ~/.ssh/deploy_key << 'KEYEOF'
+$DEPLOY_KEY
+KEYEOF
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
 
@@ -225,7 +227,9 @@ jobs:
           DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" | base64 -d > ~/.ssh/deploy_key
+          cat > ~/.ssh/deploy_key << 'KEYEOF'
+$DEPLOY_KEY
+KEYEOF
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
 
