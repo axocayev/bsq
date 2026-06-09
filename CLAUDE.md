@@ -19,6 +19,8 @@ cd backend
 
 ### Frontend
 
+Requires Node.js 20+ (Vite requires 20.19+ or 22.12+):
+
 ```bash
 cd frontend
 npm install
