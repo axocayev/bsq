@@ -2,16 +2,18 @@
 
 ## Available Workflows
 
-### 1. **ci-cd.yml** - Full CI/CD with Docker Registry & App Platform
+### 1. **ci-cd.yml** - Full CI/CD with Docker Hub
 **File**: `.github/workflows/ci-cd.yml`
 
-Builds, tests, containerizes, and deploys to DigitalOcean with full Docker Registry integration.
+Builds, tests, containerizes, and pushes Docker images to Docker Hub on every push to main.
 
 **Triggers**: Push to main, Pull requests
 
-**Jobs**: test-backend → test-frontend → build-and-push → deploy → notify
+**Jobs**: test-backend → test-frontend → build-and-push → notify
 
-**Required Secrets**: `DIGITALOCEAN_ACCESS_TOKEN`
+**Required Secrets**: 
+- `DOCKER_USERNAME` - Docker Hub username (axocayev)
+- `DOCKER_PAT` - Docker Hub Personal Access Token
 
 ---
 

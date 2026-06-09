@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 env:
-  REGISTRY: registry.digitalocean.com
-  CLUSTER_NAME: bsq-cluster
-  DO_REGION: nyc3
+  REGISTRY: docker.io
+  DOCKER_USERNAME: axocayev
+  IMAGE_NAME: bsq
 
 jobs:
   test-backend:
@@ -60,39 +60,32 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Authenticate to DigitalOcean Container Registry
-        run: |
-          echo "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --password-stdin registry.digitalocean.com
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PAT }}
 
-      - name: Build backend Docker image
-        working-directory: ./backend
-        run: |
-          docker build \
-            -t ${{ env.REGISTRY }}/bsq/backend:${{ github.sha }} \
-            -t ${{ env.REGISTRY }}/bsq/backend:latest \
-            .
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-backend:latest
+            ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
 
-      - name: Push backend image to DOCR
-        run: |
-          docker push ${{ env.REGISTRY }}/bsq/backend:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}/bsq/backend:latest
-
-      - name: Build frontend Docker image
-        working-directory: ./frontend
-        run: |
-          docker build \
-            -t ${{ env.REGISTRY }}/bsq/frontend:${{ github.sha }} \
-            -t ${{ env.REGISTRY }}/bsq/frontend:latest \
-            .
-
-      - name: Push frontend image to DOCR
-        run: |
-          docker push ${{ env.REGISTRY }}/bsq/frontend:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}/bsq/frontend:latest
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-frontend:latest
+            ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
 
   deploy:
     needs: build-and-push
@@ -150,11 +143,11 @@ jobs:
       - name: Deployment summary
         if: success()
         run: |
-          echo "✅ Deployment Complete!"
-          echo "App: bsq-exam-portal"
-          echo "Images pushed to: ${{ env.REGISTRY }}/bsq"
-          echo "Backend: ${{ env.REGISTRY }}/bsq/backend:${{ github.sha }}"
-          echo "Frontend: ${{ env.REGISTRY }}/bsq/frontend:${{ github.sha }}"
+          echo "✅ Images Built and Pushed!"
+          echo "Registry: Docker Hub"
+          echo "Username: ${{ env.DOCKER_USERNAME }}"
+          echo "Backend: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}"
+          echo "Frontend: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}"
 
   notify:
     needs: [deploy]

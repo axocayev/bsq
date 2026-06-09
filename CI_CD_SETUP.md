@@ -1,5 +1,12 @@
 # GitHub Actions CI/CD Setup
 
+## Overview
+
+Two workflows available:
+
+1. **deploy-droplet.yml** (Recommended) - Direct deployment to Droplet with SSH
+2. **ci-cd.yml** - Build, test, and push Docker images to Docker Hub
+
 ## Quick Start (Recommended: deploy-droplet.yml)
 
 ### Step 1: Generate SSH Key
@@ -88,11 +95,28 @@ ssh root@164.90.234.41 'cd /root/bsq && docker-compose logs -f backend'
 Backend takes 60+ seconds to start (migrations)
 Check: `docker-compose ps`
 
-## Alternative: App Platform
+## Docker Hub Setup (Optional: ci-cd.yml)
 
-For managed infrastructure with auto-scaling, use `ci-cd.yml` with:
-- Secret: `DIGITALOCEAN_ACCESS_TOKEN`
-- Create app in DigitalOcean console
+To automatically build and push Docker images to Docker Hub:
+
+### Step 1: Add Docker Hub Secrets
+Go to: **GitHub → Settings → Secrets and variables → Actions**
+
+Create these 2 secrets:
+
+| Secret | Value |
+|--------|-------|
+| `DOCKER_USERNAME` | axocayev |
+| `DOCKER_PAT` | Your Docker Hub Personal Access Token |
+
+⚠️ **SECURITY**: Store the token in GitHub Secrets only, never in code!
+
+### Step 2: Activate ci-cd.yml
+The workflow will automatically build and push images on each push to main:
+- `axocayev/bsq-backend:latest`
+- `axocayev/bsq-frontend:latest`
+
+View pushed images at: https://hub.docker.com/u/axocayev
 
 See `.github/workflows/README.md` for details.
 
