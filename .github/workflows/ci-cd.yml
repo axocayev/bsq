@@ -231,6 +231,33 @@ jobs:
           docker-compose ps
           SSHEOF
 
+      - name: Check Deployment Logs
+        if: always()
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
+
+          echo "========== DOCKER CONTAINERS STATUS =========="
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "cd /root/bsq && docker-compose ps"
+
+          echo ""
+          echo "========== BACKEND LOGS =========="
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "cd /root/bsq && docker-compose logs backend --tail=50"
+
+          echo ""
+          echo "========== FRONTEND LOGS =========="
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "cd /root/bsq && docker-compose logs frontend --tail=50"
+
+          echo ""
+          echo "========== POSTGRES LOGS =========="
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "cd /root/bsq && docker-compose logs postgres --tail=20"
+
       - name: Verify deployment
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
