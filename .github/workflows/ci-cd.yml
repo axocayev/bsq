@@ -119,6 +119,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.0
 
+      - name: Debug - Print All Secrets
+        run: |
+          echo "========== SECRET NAMES =========="
+          echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}"
+          echo "DOCKER_PAT is set: $([ -z '${{ secrets.DOCKER_PAT }}' ] && echo 'NO' || echo 'YES')"
+          echo "DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}"
+          echo "DEPLOY_USER: ${{ secrets.DEPLOY_USER }}"
+          echo "DB_URL: ${{ secrets.DB_URL }}"
+          echo "=================================="
+          echo "Image will be tagged as:"
+          echo "  - ${{ secrets.DOCKER_USERNAME }}/bsq-backend:latest"
+          echo "  - ${{ secrets.DOCKER_USERNAME }}/bsq-frontend:latest"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.6.0
 
