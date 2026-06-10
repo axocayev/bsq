@@ -4,8 +4,8 @@ services:
     image: postgres:16-alpine
     container_name: bsq-postgres
     environment:
-      POSTGRES_USER: bsq
-      POSTGRES_PASSWORD: bsq_secret
+      POSTGRES_USER: ${DB_USERNAME:-bsq}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-bsq_secret}
       POSTGRES_DB: bsq_exam
     volumes:
       - postgres_data:/var/lib/postgresql/data
